@@ -74,6 +74,10 @@ namespace MissionPlanner.GCSViews
 
         // declare an io port for bluetooth broadcast
         public System.IO.Ports.SerialPort btPort;
+        // delegate the function of receiving data to parent
+        public delegate void myDelegate();
+        public myDelegate delegationReceivingData;
+        
 
         public enum altmode
         {
@@ -548,6 +552,9 @@ namespace MissionPlanner.GCSViews
 
             // hide the map to prevent redraws when its loaded
             panelMap.Visible = false;
+
+            // setup delegation of receiving data
+            delegationReceivingData = new myDelegate(AppendDataToTextbox);
         }
 
         void updateCMDParams()
@@ -713,7 +720,7 @@ namespace MissionPlanner.GCSViews
                 btPort.Open();
                 btnDisconnect.Enabled = true;
                 btnBtCnt.Enabled = false;
-                txtReceive.AppendText("[" + dtn + "] " + "Connected\n");
+                txtReceived.AppendText("[" + dtn + "] " + "Connected\n");
                 btPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedByPort);
             }
             catch (Exception ex) { MessageBox.Show(ex.ToString(), "Error"); }
@@ -721,10 +728,21 @@ namespace MissionPlanner.GCSViews
 
         private void DataReceivedByPort(object sender, SerialDataReceivedEventArgs e)
         {
+            //DateTime dt = DateTime.Now;
+            //String dtn = dt.ToShortTimeString();
+
+            //txtReceived.AppendText("[" + dtn + "] " + "Received: " + btPort.ReadExisting() + "\n");
+            //txtReceived.AppendText(btPort.ReadExisting() + "\n");
+            Parent.Invoke(delegationReceivingData);
+        }
+
+        private void AppendDataToTextbox()
+        {
             DateTime dt = DateTime.Now;
             String dtn = dt.ToShortTimeString();
 
-            txtReceive.AppendText("[" + dtn + "] " + "Received: " + btPort.ReadExisting() + "\n");
+            txtReceived.AppendText("[" + dtn + "] " + "Received: " + btPort.ReadExisting() + "\n");
+            //txtReceived.AppendText(btPort.ReadExisting() + "\n");
         }
 
         private void btnDisconnect_Click(object sender, EventArgs e)
@@ -737,7 +755,7 @@ namespace MissionPlanner.GCSViews
                 btPort.Close();
                 btnDisconnect.Enabled = false;
                 btnBtCnt.Enabled = true;
-                txtReceive.AppendText("[" + dtn + "] " + "Disconnected\n");
+                txtReceived.AppendText("[" + dtn + "] " + "Disconnected\n");
             }
         }
 
@@ -747,7 +765,7 @@ namespace MissionPlanner.GCSViews
             String dtn = dt.ToShortTimeString();
             String data = txtDataToSend.Text;
             btPort.Write(data);
-            txtReceive.AppendText("[" + dtn + "] " + "Sent: " + data + "\n");
+            txtReceived.AppendText("[" + dtn + "] " + "Sent: " + data + "\n");
         }
 
         private void FlightPlanner_Load(object sender, EventArgs e)
