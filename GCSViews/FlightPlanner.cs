@@ -687,87 +687,6 @@ namespace MissionPlanner.GCSViews
             writeKML();
         }
 
-        private void AutolifeguardsMode(object sender, EventArgs e)
-        {
-            panelAL.Enabled = true;
-            foreach (String s in System.IO.Ports.SerialPort.GetPortNames())
-            {
-                cmbPort.Items.Add(s);
-            }
-        }
-
-        private void btnBtCnt_Click(object sender, EventArgs e)
-        {
-            String port = cmbPort.Text;
-            int baudrate = Convert.ToInt32(cmbBaudRate.Text);
-            Parity parity = (Parity)Enum.Parse(typeof(Parity), "None");
-            int databits = Convert.ToInt32("8");
-            StopBits stopbits = (StopBits)Enum.Parse(typeof(StopBits), "One");
-
-            serialport_connect(port, baudrate, parity, databits, stopbits);
-        }
-
-        public void serialport_connect(String port, int baudrate, Parity parity, int databits, StopBits stopbits)
-        {
-            DateTime dt = DateTime.Now;
-            String dtn = dt.ToShortTimeString();
-
-            btPort = new System.IO.Ports.SerialPort(
-            port, baudrate, parity, databits, stopbits);
-
-            try
-            {
-                btPort.Open();
-                btnDisconnect.Enabled = true;
-                btnBtCnt.Enabled = false;
-                txtReceived.AppendText("[" + dtn + "] " + "Connected\n");
-                btPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedByPort);
-            }
-            catch (Exception ex) { MessageBox.Show(ex.ToString(), "Error"); }
-        }
-
-        private void DataReceivedByPort(object sender, SerialDataReceivedEventArgs e)
-        {
-            //DateTime dt = DateTime.Now;
-            //String dtn = dt.ToShortTimeString();
-
-            //txtReceived.AppendText("[" + dtn + "] " + "Received: " + btPort.ReadExisting() + "\n");
-            //txtReceived.AppendText(btPort.ReadExisting() + "\n");
-            Parent.Invoke(delegationReceivingData);
-        }
-
-        private void AppendDataToTextbox()
-        {
-            DateTime dt = DateTime.Now;
-            String dtn = dt.ToShortTimeString();
-
-            txtReceived.AppendText("[" + dtn + "] " + "Received: " + btPort.ReadExisting() + "\n");
-            //txtReceived.AppendText(btPort.ReadExisting() + "\n");
-        }
-
-        private void btnDisconnect_Click(object sender, EventArgs e)
-        {
-            DateTime dt = DateTime.Now;
-            String dtn = dt.ToShortTimeString();
-
-            if (btPort.IsOpen)
-            {
-                btPort.Close();
-                btnDisconnect.Enabled = false;
-                btnBtCnt.Enabled = true;
-                txtReceived.AppendText("[" + dtn + "] " + "Disconnected\n");
-            }
-        }
-
-        private void btnSendMsg_Click(object sender, EventArgs e)
-        {
-            DateTime dt = DateTime.Now;
-            String dtn = dt.ToShortTimeString();
-            String data = txtDataToSend.Text;
-            btPort.Write(data);
-            txtReceived.AppendText("[" + dtn + "] " + "Sent: " + data + "\n");
-        }
-
         private void FlightPlanner_Load(object sender, EventArgs e)
         {
             quickadd = true;
@@ -6299,12 +6218,119 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
 
         }
 
-        /*private class AutoLifeguards
+        private class AutoLifeguards
+        {
+            private struct ALNode
+            {
+                int number;
+                char curStatus;
+                float longitude;
+                float latitude;
+                long time;
+                ALNode *next;
+            }
+
+            public void ReceiveData(string input);
+            private void parseData();
+            private void AddNode();
+            private void DeleteNode();
+            public void EmergencyMode();
+        }
+
+        public void AutoLifeguards.ReceiveData(string input)
         {
 
-        }*/
+        }
 
-        
+        private void AutolifeguardsMode(object sender, EventArgs e)
+        {
+            if (panelAL.Enabled != true)
+            {
+                panelAL.Enabled = true;
+                foreach (String s in System.IO.Ports.SerialPort.GetPortNames())
+                {
+                    cmbPort.Items.Add(s);
+                }
+            }
+            else
+            {
+                panelAL.Enabled = false;
+            }
+        }
+
+        private void btnBtCnt_Click(object sender, EventArgs e)
+        {
+            String port = cmbPort.Text;
+            int baudrate = Convert.ToInt32(cmbBaudRate.Text);
+            Parity parity = (Parity)Enum.Parse(typeof(Parity), "None");
+            int databits = Convert.ToInt32("8");
+            StopBits stopbits = (StopBits)Enum.Parse(typeof(StopBits), "One");
+
+            serialport_connect(port, baudrate, parity, databits, stopbits);
+        }
+
+        public void serialport_connect(String port, int baudrate, Parity parity, int databits, StopBits stopbits)
+        {
+            DateTime dt = DateTime.Now;
+            String dtn = dt.ToShortTimeString();
+
+            btPort = new System.IO.Ports.SerialPort(
+            port, baudrate, parity, databits, stopbits);
+
+            try
+            {
+                btPort.Open();
+                btnDisconnect.Enabled = true;
+                btnBtCnt.Enabled = false;
+                txtReceived.AppendText("[" + dtn + "] " + "Connected\n");
+                btPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedByPort);
+            }
+            catch (Exception ex) { MessageBox.Show(ex.ToString(), "Error"); }
+        }
+
+        private void DataReceivedByPort(object sender, SerialDataReceivedEventArgs e)
+        {
+            //DateTime dt = DateTime.Now;
+            //String dtn = dt.ToShortTimeString();
+
+            //txtReceived.AppendText("[" + dtn + "] " + "Received: " + btPort.ReadExisting() + "\n");
+            //txtReceived.AppendText(btPort.ReadExisting() + "\n");
+            Parent.Invoke(delegationReceivingData);
+        }
+
+        private void AppendDataToTextbox()
+        {
+            DateTime dt = DateTime.Now;
+            String dtn = dt.ToShortTimeString();
+            String readFromPort = btPort.ReadExisting();
+
+            txtReceived.AppendText("[" + dtn + "] " + "Received: " + readFromPort + "\n");
+            AutoLifeguards.ReceiveData(readFromPort);
+            //txtReceived.AppendText(btPort.ReadExisting() + "\n");
+        }
+
+        private void btnDisconnect_Click(object sender, EventArgs e)
+        {
+            DateTime dt = DateTime.Now;
+            String dtn = dt.ToShortTimeString();
+
+            if (btPort.IsOpen)
+            {
+                btPort.Close();
+                btnDisconnect.Enabled = false;
+                btnBtCnt.Enabled = true;
+                txtReceived.AppendText("[" + dtn + "] " + "Disconnected\n");
+            }
+        }
+
+        private void btnSendMsg_Click(object sender, EventArgs e)
+        {
+            DateTime dt = DateTime.Now;
+            String dtn = dt.ToShortTimeString();
+            String data = txtDataToSend.Text;
+            btPort.Write(data);
+            txtReceived.AppendText("[" + dtn + "] " + "Sent: " + data + "\n");
+        }
 
         
     }
