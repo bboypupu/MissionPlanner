@@ -6220,26 +6220,82 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
 
         private class AutoLifeguards
         {
-            private struct ALNode
+            private class ALNode
             {
-                int number;
-                char curStatus;
-                float longitude;
-                float latitude;
-                long time;
-                ALNode *next;
+                public int number;
+                public char curStatus;
+                public float longitude;
+                public float latitude;
+                public long time;
+                public ALNode next;
             }
+            public ALNode headNode;
+            
+            public AutoLifeguards()
+            {
+                Console.WriteLine("AutoLifeguards item has been created.");
+                headNode.next = new ALNode();
 
-            public void ReceiveData(string input);
+            }
+            public string ReceiveData(string input)
+            {
+                string resultString = "";
+                if(input.Length != 12)
+                {
+                    resultString = "Error input.";
+                    Console.WriteLine(resultString);
+                    return resultString;
+                }
+                else
+                {
+                    ALNode tmpNode = new ALNode();
+                    tmpNode.number = input[0] - '0';
+                    tmpNode.curStatus = input[1];
+                    float fraction = Int32.Parse(input.Substring(3)) / (10^9);
+                    if(input[2] == 'A')
+                    {
+                        tmpNode.latitude = 25 + fraction;
+                    }
+                    else if(input[2] == 'B')
+                    {
+                        tmpNode.longitude = 121 + fraction;
+                    }
+                    else
+                    {
+                        resultString = "Error location.";
+                        Console.WriteLine(resultString);
+                        return resultString;
+                    }
+                    SearchNode(tmpNode.number);
+                    return resultString;
+                }
+            }
             private void parseData();
-            private void AddNode();
+            private ALNode TailNode()
+            {
+                ALNode thisNode = headNode;
+                while(thisNode.next != null)
+                {
+                    thisNode = thisNode.next;
+                }
+                return thisNode;
+            }
             private void DeleteNode();
+            public ALNode SearchNode(int num)
+            {
+                ALNode thisNode = headNode;
+                while(thisNode.next != null)
+                {
+                    if(thisNode.number == num)
+                    {
+                        return thisNode;
+                    }
+                    thisNode = thisNode.next;
+                }
+                thisNode.next = new ALNode();
+                return thisNode.next;
+            }
             public void EmergencyMode();
-        }
-
-        public void AutoLifeguards.ReceiveData(string input)
-        {
-
         }
 
         private void AutolifeguardsMode(object sender, EventArgs e)
@@ -6305,7 +6361,7 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             String readFromPort = btPort.ReadExisting();
 
             txtReceived.AppendText("[" + dtn + "] " + "Received: " + readFromPort + "\n");
-            AutoLifeguards.ReceiveData(readFromPort);
+            // AutoLifeguards.ReceiveData(readFromPort);
             //txtReceived.AppendText(btPort.ReadExisting() + "\n");
         }
 
