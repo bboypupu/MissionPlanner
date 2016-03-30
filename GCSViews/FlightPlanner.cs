@@ -77,7 +77,8 @@ namespace MissionPlanner.GCSViews
         // delegate the function of receiving data to parent
         public delegate void myDelegate();
         public myDelegate delegationReceivingData;
-        
+        // declare AutoLifegurads object
+        private AutoLifeguardsObject ALObj = new AutoLifeguardsObject();
 
         public enum altmode
         {
@@ -6218,22 +6219,33 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
 
         }
 
-        private class AutoLifeguards
+        private class AutoLifeguardsObject
         {
             private class ALNode
             {
                 public int number;
                 public char curStatus;
-                public float longitude;
-                public float latitude;
-                public long time;
+                public Stack<Vector> location;
+                public double newLongitude;
+                public double newLatitude;
+                public double time;
                 public ALNode next;
+
+                public ALNode()
+                {
+                    number = 0;
+                    curStatus = 'N';
+                    location.Push(new Vector(121,25));
+                    newLongitude = 0.0;
+                    newLatitude = 0.0;
+                    time = System.DateTime.Now.TimeOfDay.TotalSeconds;
+                }
             }
-            public ALNode headNode;
+            private ALNode headNode;
             
-            public AutoLifeguards()
+            public void AutoLifeguards()
             {
-                Console.WriteLine("AutoLifeguards item has been created.");
+                Console.WriteLine("AutoLifeguards object has been created.");
                 headNode.next = new ALNode();
 
             }
@@ -6248,17 +6260,18 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                 }
                 else
                 {
-                    ALNode tmpNode = new ALNode();
-                    tmpNode.number = input[0] - '0';
-                    tmpNode.curStatus = input[1];
-                    float fraction = Int32.Parse(input.Substring(3)) / (10^9);
+                    int inputNumber = input[0] - '0';
+                    ALNode thisNode = SearchNode(inputNumber);
+                    thisNode.number = inputNumber;
+                    thisNode.curStatus = input[1];
+                    double fraction = Int32.Parse(input.Substring(3)) / (10^9);
                     if(input[2] == 'A')
                     {
-                        tmpNode.latitude = 25 + fraction;
+                        thisNode.newLatitude = 25 + fraction;
                     }
                     else if(input[2] == 'B')
                     {
-                        tmpNode.longitude = 121 + fraction;
+                        thisNode.newLongitude = 121 + fraction;
                     }
                     else
                     {
@@ -6266,11 +6279,21 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                         Console.WriteLine(resultString);
                         return resultString;
                     }
-                    SearchNode(tmpNode.number);
+                    
+                    if(thisNode.newLongitude != 0.0 && thisNode.newLatitude != 0.0)
+                    {
+                        // add function for stack oversize?
+                        
+                        // if both newLongitude and newLatitude are dirty, push it into location stack
+                        thisNode.location.Push(new Vector(thisNode.newLongitude, thisNode.newLatitude));
+                        thisNode.newLongitude = 0.0;
+                        thisNode.newLatitude = 0.0;
+                    }
+                    resultString = "Received and parsed successfully: " + input;
+                    Console.WriteLine(resultString);
                     return resultString;
                 }
             }
-            private void parseData();
             private ALNode TailNode()
             {
                 ALNode thisNode = headNode;
@@ -6280,9 +6303,10 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                 }
                 return thisNode;
             }
-            private void DeleteNode();
-            public ALNode SearchNode(int num)
+            private ALNode SearchNode(int num)
             {
+                // Search if there's a node with this number
+                // if there's no such node, add a new node on the tail and return
                 ALNode thisNode = headNode;
                 while(thisNode.next != null)
                 {
@@ -6295,7 +6319,7 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                 thisNode.next = new ALNode();
                 return thisNode.next;
             }
-            public void EmergencyMode();
+            // public void EmergencyMode();
         }
 
         private void AutolifeguardsMode(object sender, EventArgs e)
@@ -6361,7 +6385,8 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             String readFromPort = btPort.ReadExisting();
 
             txtReceived.AppendText("[" + dtn + "] " + "Received: " + readFromPort + "\n");
-            // AutoLifeguards.ReceiveData(readFromPort);
+            // Put the data into datastructure AutoLifeguards.
+            ALObj.ReceiveData(readFromPort);
             //txtReceived.AppendText(btPort.ReadExisting() + "\n");
         }
 
