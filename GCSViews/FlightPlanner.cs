@@ -6235,7 +6235,7 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                 {
                     number = 0;
                     curStatus = 'N';
-                    location.Push(new Vector(121,25));
+                    location = new Stack<Vector>();
                     newLongitude = 0.0;
                     newLatitude = 0.0;
                     time = System.DateTime.Now.TimeOfDay.TotalSeconds;
@@ -6243,11 +6243,10 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             }
             private ALNode headNode;
             
-            public void AutoLifeguards()
+            public AutoLifeguardsObject()
             {
                 Console.WriteLine("AutoLifeguards object has been created.");
-                headNode.next = new ALNode();
-
+                headNode = new ALNode();
             }
             public string ReceiveData(string input)
             {
@@ -6264,7 +6263,7 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                     ALNode thisNode = SearchNode(inputNumber);
                     thisNode.number = inputNumber;
                     thisNode.curStatus = input[1];
-                    double fraction = Int32.Parse(input.Substring(3)) / (10^9);
+                    double fraction = Double.Parse(input.Substring(3)) / (1000000000);
                     if(input[2] == 'A')
                     {
                         thisNode.newLatitude = 25 + fraction;
@@ -6386,7 +6385,7 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
 
             txtReceived.AppendText("[" + dtn + "] " + "Received: " + readFromPort + "\n");
             // Put the data into datastructure AutoLifeguards.
-            ALObj.ReceiveData(readFromPort);
+            txtReceived.AppendText("[System] " + ALObj.ReceiveData(readFromPort) + "\n");
             //txtReceived.AppendText(btPort.ReadExisting() + "\n");
         }
 
