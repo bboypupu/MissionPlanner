@@ -443,6 +443,7 @@ namespace MissionPlanner.GCSViews
             MainMap.CacheLocation = Path.GetDirectoryName(Application.ExecutablePath) + Path.DirectorySeparatorChar +
                                     "gmapcache" + Path.DirectorySeparatorChar;
             MainMap.MapProvider = GoogleSatelliteMapProvider.Instance;
+            MainMap.Position = new PointLatLng(25.0, 121.5);
 
             // map events
             MainMap.OnPositionChanged += MainMap_OnCurrentPositionChanged;
@@ -6229,6 +6230,7 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                 public double newLongitude;
                 public double newLatitude;
                 public double time;
+                public bool isDirty;
                 public ALNode next;
 
                 public ALNode()
@@ -6238,16 +6240,19 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                     location = new Stack<Vector>();
                     newLongitude = 0.0;
                     newLatitude = 0.0;
+                    isDirty = false;
                     time = System.DateTime.Now.TimeOfDay.TotalSeconds;
                 }
             }
             private ALNode headNode;
+            public bool isDirty = false;
             
             public AutoLifeguardsObject()
             {
                 Console.WriteLine("AutoLifeguards object has been created.");
                 headNode = new ALNode();
             }
+            
             public string ReceiveData(string input)
             {
                 string resultString = "";
@@ -6284,7 +6289,9 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                         // add function for stack oversize?
                         
                         // if both newLongitude and newLatitude are dirty, push it into location stack
-                        thisNode.location.Push(new Vector(thisNode.newLongitude, thisNode.newLatitude));
+                        thisNode.location.Push(new Vector(thisNode.newLatitude, thisNode.newLongitude));
+                        isDirty = true;
+                        thisNode.isDirty = true;
                         thisNode.newLongitude = 0.0;
                         thisNode.newLatitude = 0.0;
                     }
@@ -6293,6 +6300,7 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                     return resultString;
                 }
             }
+            
             private ALNode TailNode()
             {
                 ALNode thisNode = headNode;
@@ -6302,6 +6310,7 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                 }
                 return thisNode;
             }
+            
             private ALNode SearchNode(int num)
             {
                 // Search if there's a node with this number
@@ -6317,6 +6326,27 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                 }
                 thisNode.next = new ALNode();
                 return thisNode.next;
+            }
+            
+            public  List<Vector> UpdateMaker()
+            {
+                if(!this.isDirty)
+                {
+                    return null;
+                }
+                List<Vector> dirtyList = new List<Vector>();
+                ALNode thisNode = headNode;
+                while(thisNode.next != null)
+                {
+                    if(thisNode.isDirty)
+                    {
+                        Vector tmpV = thisNode.location.Peek();
+                        dirtyList.Add(new Vector(tmpV.Latitude, tmpV.Longitude, thisNode.number));
+                        thisNode.isDirty = false;
+                    }
+                    thisNode = thisNode.next;
+                }
+                return dirtyList;
             }
             // public void EmergencyMode();
         }
@@ -6387,6 +6417,7 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             // Put the data into datastructure AutoLifeguards.
             txtReceived.AppendText("[System] " + ALObj.ReceiveData(readFromPort) + "\n");
             //txtReceived.AppendText(btPort.ReadExisting() + "\n");
+            UpdateTheMarkerOnMap();
         }
 
         private void btnDisconnect_Click(object sender, EventArgs e)
@@ -6412,6 +6443,19 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             txtReceived.AppendText("[" + dtn + "] " + "Sent: " + data + "\n");
         }
 
-        
+        public void UpdateTheMarkerOnMap()
+        {
+            List<Vector> bandUpdated = ALObj.UpdateMaker();
+            if(bandUpdated!=null)
+            {
+                GMapOverlay markersOverlay = new GMapOverlay("bandLocations");
+                for (int i = 0; i < bandUpdated.Count; i++)
+                {
+                    GMarkerGoogle marker = new GMarkerGoogle(new PointLatLng(bandUpdated[i].Latitude, bandUpdated[i].Longitude), GMarkerGoogleType.blue);
+                    markersOverlay.Markers.Add(marker);
+                    MainMap.Overlays.Add(markersOverlay);
+                }
+            }
+        }
     }
 }

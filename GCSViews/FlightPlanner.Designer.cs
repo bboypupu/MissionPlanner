@@ -1587,5 +1587,5 @@
         private System.Windows.Forms.ComboBox cmbBaudRate;
         private System.Windows.Forms.ComboBox cmbPort;
         private System.Windows.Forms.Button btnDisconnect;
-    }
+        }
 }
