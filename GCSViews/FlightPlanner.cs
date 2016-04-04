@@ -6316,16 +6316,21 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                 // Search if there's a node with this number
                 // if there's no such node, add a new node on the tail and return
                 ALNode thisNode = headNode;
-                while(thisNode.next != null)
+                while (true)
                 {
-                    if(thisNode.number == num)
+                    if (thisNode.number == num)
                     {
                         return thisNode;
                     }
-                    thisNode = thisNode.next;
-                }
+                    
+                    if (thisNode.next != null)
+                        thisNode = thisNode.next;
+                    else
+                        break;
+                } 
                 thisNode.next = new ALNode();
-                return thisNode.next;
+                thisNode = thisNode.next;
+                return thisNode;
             }
             
             public  List<Vector> UpdateMaker()
@@ -6336,7 +6341,7 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                 }
                 List<Vector> dirtyList = new List<Vector>();
                 ALNode thisNode = headNode;
-                while(thisNode.next != null)
+                while(true)
                 {
                     if(thisNode.isDirty)
                     {
@@ -6344,7 +6349,10 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                         dirtyList.Add(new Vector(tmpV.Latitude, tmpV.Longitude, thisNode.number));
                         thisNode.isDirty = false;
                     }
-                    thisNode = thisNode.next;
+                    if (thisNode.next != null)
+                        thisNode = thisNode.next;
+                    else
+                        break;
                 }
                 return dirtyList;
             }
