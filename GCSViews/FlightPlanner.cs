@@ -509,6 +509,8 @@ namespace MissionPlanner.GCSViews
 
             MainMap.Overlays.Add(poioverlay);
 
+            bandLocationOverlay = new GMapOverlay("bandLocations");
+
             top = new GMapOverlay("top");
             //MainMap.Overlays.Add(top);
 
@@ -2710,6 +2712,7 @@ namespace MissionPlanner.GCSViews
         public static GMapOverlay polygonsoverlay; // where the track is drawn
         public static GMapOverlay airportsoverlay;
         public static GMapOverlay poioverlay = new GMapOverlay("POI"); // poi layer
+        public static GMapOverlay bandLocationOverlay;
         GMapOverlay drawnpolygonsoverlay;
         GMapOverlay kmlpolygonsoverlay;
         GMapOverlay geofenceoverlay;
@@ -6230,7 +6233,6 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                 public double newLongitude;
                 public double newLatitude;
                 public double time;
-                public bool isDirty;
                 public ALNode next;
 
                 public ALNode()
@@ -6240,12 +6242,10 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                     location = new Stack<Vector>();
                     newLongitude = 0.0;
                     newLatitude = 0.0;
-                    isDirty = false;
                     time = System.DateTime.Now.TimeOfDay.TotalSeconds;
                 }
             }
             private ALNode headNode;
-            public bool isDirty = false;
             
             public AutoLifeguardsObject()
             {
@@ -6290,8 +6290,6 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                         
                         // if both newLongitude and newLatitude are dirty, push it into location stack
                         thisNode.location.Push(new Vector(thisNode.newLatitude, thisNode.newLongitude));
-                        isDirty = true;
-                        thisNode.isDirty = true;
                         thisNode.newLongitude = 0.0;
                         thisNode.newLatitude = 0.0;
                     }
@@ -6335,26 +6333,26 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             
             public  List<Vector> UpdateMaker()
             {
-                if(!this.isDirty)
+                List<Vector> resultList = new List<Vector>();
+                ALNode thisNode = headNode.next;
+                if(thisNode == null)
                 {
                     return null;
                 }
-                List<Vector> dirtyList = new List<Vector>();
-                ALNode thisNode = headNode;
                 while(true)
                 {
-                    if(thisNode.isDirty)
+                    if(thisNode.location.Count != 0)
                     {
                         Vector tmpV = thisNode.location.Peek();
-                        dirtyList.Add(new Vector(tmpV.Latitude, tmpV.Longitude, thisNode.number));
-                        thisNode.isDirty = false;
+                        resultList.Add(new Vector(tmpV.Latitude, tmpV.Longitude, thisNode.number));
                     }
+                    
                     if (thisNode.next != null)
                         thisNode = thisNode.next;
                     else
                         break;
                 }
-                return dirtyList;
+                return resultList;
             }
             // public void EmergencyMode();
         }
@@ -6456,12 +6454,18 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             List<Vector> bandUpdated = ALObj.UpdateMaker();
             if(bandUpdated!=null)
             {
-                GMapOverlay markersOverlay = new GMapOverlay("bandLocations");
+                bandLocationOverlay.Clear();
                 for (int i = 0; i < bandUpdated.Count; i++)
                 {
-                    GMarkerGoogle marker = new GMarkerGoogle(new PointLatLng(bandUpdated[i].Latitude, bandUpdated[i].Longitude), GMarkerGoogleType.blue);
-                    markersOverlay.Markers.Add(marker);
-                    MainMap.Overlays.Add(markersOverlay);
+                    PointLatLng point = new PointLatLng(bandUpdated[i].Latitude, bandUpdated[i].Longitude);
+                    GMarkerGoogle marker = new GMarkerGoogle(point, GMarkerGoogleType.blue);
+                    string tag = (bandUpdated[i].Altitude).ToString();
+                    marker.ToolTipMode = MarkerTooltipMode.OnMouseOver;
+                    marker.ToolTipText = tag;
+                    marker.Tag = tag;
+                    
+                    bandLocationOverlay.Markers.Add(marker);
+                    MainMap.Overlays.Add(bandLocationOverlay);
                 }
             }
         }
