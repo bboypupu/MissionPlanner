@@ -80,6 +80,13 @@ namespace MissionPlanner.GCSViews
         // declare AutoLifegurads object
         private AutoLifeguardsObject ALObj = new AutoLifeguardsObject();
 
+        private enum AL_RowIndex : int
+        {
+            AL_TAKEOFF = 0, 
+            AL_TO_BAND_WAYPOINT = 1,
+            AL_SET_SERVO = 2
+        }
+
         public enum altmode
         {
             Relative = MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT,
@@ -6354,7 +6361,13 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                 }
                 return resultList;
             }
-            // public void EmergencyMode();
+
+            public Vector GetLocationWhenEmergency(int num)
+            {
+                ALNode thisNode = SearchNode(num);
+                Vector thisLoaction = thisNode.location.Peek();
+                return thisLoaction;
+            }
         }
 
         private void AutolifeguardsMode(object sender, EventArgs e)
@@ -6365,6 +6378,7 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                 panelAL.Size = new Size(425, Parent.Size.Height);
                 panelAL.Enabled = true;
                 TXT_DefaultAlt.Text = "5";
+                TXT_WPRad.Text = "1";
                 foreach (String s in System.IO.Ports.SerialPort.GetPortNames())
                 {
                     cmbPort.Items.Add(s);
@@ -6375,6 +6389,7 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                 panelAL.Expand = false;
                 panelAL.Enabled = false;
                 TXT_DefaultAlt.Text = "100";
+                TXT_WPRad.Text = "5";
             }
         }
 
@@ -6475,9 +6490,62 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             }
         }
 
+        private void emergencyMode(int nodeNumber)
+        {
+            /*
+            // Step 0: Get the location of the band which is calling for SOS, and add a marker on the map.
+            Vector bandLocation = ALObj.GetLocationWhenEmergency(nodeNumber);
+            PointLatLng point = new PointLatLng(bandLocation.Latitude, bandLocation.Longitude);
+            GMarkerGoogle marker = new GMarkerGoogle(point, GMarkerGoogleType.red_big_stop);
+            string tag = "SOS! Number: " + nodeNumber.ToString();
+            marker.ToolTipMode = MarkerTooltipMode.OnMouseOver;
+            marker.ToolTipText = tag;
+            marker.Tag = tag;
+            */
+            Vector bandLocation = new Vector(25.0115342, 121.5062571);
+
+            // Step 1: Clean up the datagridview of commands and the waypoints, markers corresponding to it.
+            this.clearMissionToolStripMenuItem.PerformClick();
+            /*while(Commands.RowCount > 0)
+            {
+                quickadd = true;
+                Commands.Rows.RemoveAt(0);
+                quickadd = false;
+                writeKML();
+            }*/
+
+            // Step 2: Set home point and a take off command.
+            this.BUT_Add.PerformClick();
+            Commands.Rows[(int)AL_RowIndex.AL_TAKEOFF].Cells[Command.Index].Value = "TAKEOFF";
+            writeKML();
+            // Step 3: Add a waypoint to the band.
+            AddWPToMap(bandLocation.Latitude, bandLocation.Longitude, 5);
+            
+            // Step 4: Add a command of throwing the buoy off the drone.
+            selectedrow = Commands.RowCount-1;
+            Commands.Rows.Insert(selectedrow + 1, 1);
+            writeKML();
+            // this.BUT_Add.PerformClick();
+            Commands.Rows[(int)AL_RowIndex.AL_SET_SERVO].Cells[Command.Index].Value = "DO_SET_SERVO";
+            Commands.Rows[(int)AL_RowIndex.AL_SET_SERVO].Cells[1].Value = "10";
+            Commands.Rows[(int)AL_RowIndex.AL_SET_SERVO].Cells[2].Value = "2200";
+            writeKML();
+
+            // Step 5: Add commands for the drone to return to home and land.
+
+            // Step 6: Write the flight plan to the RAM of the drone.
+
+            // // Step 7: Allow auto take off to finnish the mission without artificial interference.
+        }
+
         private void panelAL_CloseClick(object sender, EventArgs e)
         {
 
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            emergencyMode(1);
         }
     }
 }
