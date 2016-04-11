@@ -650,11 +650,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
-    <Compile Include="Strings.ja-JP.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Strings.ja-JP.resx</DependentUpon>
-    </Compile>
     <Compile Include="Strings.zh-Hans.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -1310,10 +1305,7 @@
     <EmbeddedResource Include="SerialOutputPass.zh-Hans.resx">
       <DependentUpon>SerialOutputPass.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Strings.ja-JP.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Strings.ja-JP.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
+    <EmbeddedResource Include="Strings.ja-JP.resx" />
     <EmbeddedResource Include="Strings.resx">
       <SubType>Designer</SubType>
       <Generator>PublicResXFileCodeGenerator</Generator>
@@ -3086,7 +3078,6 @@
     <Content Include="ArduCopterConfig.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="bandX.jpg" />
     <Content Include="camerasBuiltin.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -3192,7 +3183,6 @@
     <Content Include="mavgraphs.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="Resources\bandX_logo.jpg" />
     <Content Include="Scripts\example5 inject data.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
