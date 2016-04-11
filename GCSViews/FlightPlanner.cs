@@ -6361,7 +6361,10 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
         {
             if (panelAL.Enabled != true)
             {
+                panelAL.Expand = true;
+                panelAL.Size = new Size(425, Parent.Size.Height);
                 panelAL.Enabled = true;
+                TXT_DefaultAlt.Text = "5";
                 foreach (String s in System.IO.Ports.SerialPort.GetPortNames())
                 {
                     cmbPort.Items.Add(s);
@@ -6369,7 +6372,9 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             }
             else
             {
+                panelAL.Expand = false;
                 panelAL.Enabled = false;
+                TXT_DefaultAlt.Text = "100";
             }
         }
 
@@ -6468,6 +6473,11 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                     MainMap.Overlays.Add(bandLocationOverlay);
                 }
             }
+        }
+
+        private void panelAL_CloseClick(object sender, EventArgs e)
+        {
+
         }
     }
 }
