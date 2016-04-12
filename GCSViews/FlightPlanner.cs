@@ -80,11 +80,15 @@ namespace MissionPlanner.GCSViews
         // declare AutoLifegurads object
         private AutoLifeguardsObject ALObj = new AutoLifeguardsObject();
 
+        public bool AL_isBusy = false;
+
         private enum AL_RowIndex : int
         {
             AL_TAKEOFF = 0, 
             AL_TO_BAND_WAYPOINT = 1,
-            AL_SET_SERVO = 2
+            AL_SET_SERVO = 2,
+            AL_RETURN_TO_LAUNCH = 3,
+            AL_LAND = 4
         }
 
         public enum altmode
@@ -6253,11 +6257,15 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                 }
             }
             private ALNode headNode;
+            public bool isEmergent;
+            public int sosNodeNumber;
             
             public AutoLifeguardsObject()
             {
                 Console.WriteLine("AutoLifeguards object has been created.");
                 headNode = new ALNode();
+                isEmergent = false;
+                sosNodeNumber = 0;
             }
             
             public string ReceiveData(string input)
@@ -6352,6 +6360,11 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                     {
                         Vector tmpV = thisNode.location.Peek();
                         resultList.Add(new Vector(tmpV.Latitude, tmpV.Longitude, thisNode.number));
+                        if(thisNode.curStatus == 'B')
+                        {
+                            isEmergent = true;
+                            sosNodeNumber = thisNode.number;
+                        }
                     }
                     
                     if (thisNode.next != null)
@@ -6440,10 +6453,15 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             String readFromPort = btPort.ReadExisting();
 
             txtReceived.AppendText("[" + dtn + "] " + "Received: " + readFromPort + "\n");
-            // Put the data into datastructure AutoLifeguards.
+            
+            // Put the data into datastructure AutoLifeguardsObject.
             txtReceived.AppendText("[System] " + ALObj.ReceiveData(readFromPort) + "\n");
-            //txtReceived.AppendText(btPort.ReadExisting() + "\n");
+
             UpdateTheMarkerOnMap();
+            if(ALObj.isEmergent && !AL_isBusy)
+            {
+                emergencyMode(ALObj.sosNodeNumber);
+            }
         }
 
         private void btnDisconnect_Click(object sender, EventArgs e)
@@ -6492,7 +6510,7 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
 
         private void emergencyMode(int nodeNumber)
         {
-            /*
+            AL_isBusy = true;
             // Step 0: Get the location of the band which is calling for SOS, and add a marker on the map.
             Vector bandLocation = ALObj.GetLocationWhenEmergency(nodeNumber);
             PointLatLng point = new PointLatLng(bandLocation.Latitude, bandLocation.Longitude);
@@ -6501,8 +6519,8 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             marker.ToolTipMode = MarkerTooltipMode.OnMouseOver;
             marker.ToolTipText = tag;
             marker.Tag = tag;
-            */
-            Vector bandLocation = new Vector(25.0115342, 121.5062571);
+            
+            // Vector bandLocation = new Vector(25.0115342, 121.5062571);       // This line is for testing.
 
             // Step 1: Clean up the datagridview of commands and the waypoints, markers corresponding to it.
             this.clearMissionToolStripMenuItem.PerformClick();
@@ -6517,14 +6535,17 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             // Step 2: Set home point and a take off command.
             this.BUT_Add.PerformClick();
             Commands.Rows[(int)AL_RowIndex.AL_TAKEOFF].Cells[Command.Index].Value = "TAKEOFF";
+            Commands.Rows[(int)AL_RowIndex.AL_TAKEOFF].Cells[Alt.Index].Value = "5";
             writeKML();
             // Step 3: Add a waypoint to the band.
             AddWPToMap(bandLocation.Latitude, bandLocation.Longitude, 5);
             
+            // Step 3.5: Make the drone hover for a while to try to connect the bluetooth of the band.
+            //           Then use the strengh of the signal to locate the band more precisely.
+
             // Step 4: Add a command of throwing the buoy off the drone.
-            selectedrow = Commands.RowCount-1;
-            Commands.Rows.Insert(selectedrow + 1, 1);
-            writeKML();
+            setSelectedRowToTheLastOne();
+            // writeKML();
             // this.BUT_Add.PerformClick();
             Commands.Rows[(int)AL_RowIndex.AL_SET_SERVO].Cells[Command.Index].Value = "DO_SET_SERVO";
             Commands.Rows[(int)AL_RowIndex.AL_SET_SERVO].Cells[1].Value = "10";
@@ -6532,10 +6553,29 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             writeKML();
 
             // Step 5: Add commands for the drone to return to home and land.
+            setSelectedRowToTheLastOne();
+            Commands.Rows[(int)AL_RowIndex.AL_RETURN_TO_LAUNCH].Cells[Command.Index].Value = "RETURN_TO_LAUNCH";
+            Commands.Rows[(int)AL_RowIndex.AL_RETURN_TO_LAUNCH].Cells[Alt.Index].Value = "7";
+            setSelectedRowToTheLastOne();
+            Commands.Rows[(int)AL_RowIndex.AL_LAND].Cells[Command.Index].Value = "LAND";
+            writeKML();
 
             // Step 6: Write the flight plan to the RAM of the drone.
+            this.BUT_write.PerformClick();
 
             // // Step 7: Allow auto take off to finnish the mission without artificial interference.
+
+            // Final step: clean up the waypoints and be grateful to the AutoLifeguards.
+            this.clearMissionToolStripMenuItem.PerformClick();
+            UpdateTheMarkerOnMap();
+            CustomMessageBox.Show("And once again, the day is end. Thank you, the AutoLifguards");
+        }
+
+        private void setSelectedRowToTheLastOne()
+        {
+            selectedrow = Commands.RowCount - 1;
+            Commands.Rows.Insert(selectedrow + 1, 1);
+            return;
         }
 
         private void panelAL_CloseClick(object sender, EventArgs e)
