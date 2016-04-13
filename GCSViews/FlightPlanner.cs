@@ -6360,7 +6360,7 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
                     {
                         Vector tmpV = thisNode.location.Peek();
                         resultList.Add(new Vector(tmpV.Latitude, tmpV.Longitude, thisNode.number));
-                        if(thisNode.curStatus == 'B')
+                        if(thisNode.curStatus == 'B' && thisNode.newLatitude == 0 && thisNode.newLongitude == 0)
                         {
                             isEmergent = true;
                             sosNodeNumber = thisNode.number;
@@ -6519,6 +6519,9 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             marker.ToolTipMode = MarkerTooltipMode.OnMouseOver;
             marker.ToolTipText = tag;
             marker.Tag = tag;
+
+            bandLocationOverlay.Markers.Add(marker);
+            MainMap.Overlays.Add(bandLocationOverlay);
             
             // Vector bandLocation = new Vector(25.0115342, 121.5062571);       // This line is for testing.
 
@@ -6583,9 +6586,5 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
 
         }
 
-        private void button1_Click(object sender, EventArgs e)
-        {
-            emergencyMode(1);
-        }
     }
 }
