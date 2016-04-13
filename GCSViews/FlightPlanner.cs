@@ -6564,14 +6564,16 @@ Column 1: Field type (RALLY is the only one at the moment -- may have RALLY_LAND
             writeKML();
 
             // Step 6: Write the flight plan to the RAM of the drone.
-            this.BUT_write.PerformClick();
+            // this.BUT_write.PerformClick();
 
             // // Step 7: Allow auto take off to finnish the mission without artificial interference.
 
             // Final step: clean up the waypoints and be grateful to the AutoLifeguards.
+            /*
             this.clearMissionToolStripMenuItem.PerformClick();
             UpdateTheMarkerOnMap();
             CustomMessageBox.Show("And once again, the day is end. Thank you, the AutoLifguards");
+             */
         }
 
         private void setSelectedRowToTheLastOne()
